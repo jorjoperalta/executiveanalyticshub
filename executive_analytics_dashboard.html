@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Analytics Hubs Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+        
+        .dashboard-title {
+            font-size: 2.5em;
+            color: #2c3e50;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+        
+        .dashboard-subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .metric-title {
+            font-size: 1.2em;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .priority-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .priority-high { background: #e74c3c; color: white; }
+        .priority-medium { background: #f39c12; color: white; }
+        .priority-low { background: #27ae60; color: white; }
+        
+        .usage-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .usage-table th,
+        .usage-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .usage-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .kpi-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .kpi-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .funnel-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .funnel-stage {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 25px;
+            margin: 5px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            min-width: 120px;
+        }
+        
+        .funnel-stage::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -10px;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid #667eea;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+        }
+        
+        .funnel-stage:last-child::after {
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-title {
+                font-size: 2em;
+            }
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Executive Analytics Hubs Dashboard</h1>
+            <p class="dashboard-subtitle">WLV & EBH Performance Overview | Last Updated: August 2025</p>
+        </div>
+
+        <!-- Guest Usage Metrics -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-title">WLV & EBH - Guest Usage by Channel</h3>
+                <span class="priority-badge priority-medium">Medium Priority</span>
+            </div>
+            <table class="usage-table">
+                <thead>
+                    <tr>
+                        <th>Channel</th>
+                        <th>Usage %</th>
+                        <th>Priority Level</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Pre-Registration Usage</td>
+                        <td><strong>46%</strong></td>
+                        <td><span class="priority-badge priority-medium">Medium</span></td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 46%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Mobile App Usage</td>
+                        <td><strong>12%</strong></td>
+                        <td><span class="priority-badge priority-low">Low</span></td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 12%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Digital Key Usage</td>
+                        <td><strong>15%</strong></td>
+                        <td><span class="priority-badge priority-low">Low</span></td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 15%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>XBE Usage</td>
+                        <td><strong>47%</strong></td>
+                        <td><span class="priority-badge priority-medium">Medium</span></td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 47%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>RBE Usage</td>
+                        <td><strong>58%</strong></td>
+                        <td><span class="priority-badge priority-medium">Medium</span></td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 58%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>WEB Usage</td>
+                        <td><strong>38%</strong></td>
+                        <td><span class="priority-badge priority-medium">Medium</span></td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 38%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Key Performance Indicators Grid -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3 class="metric-title">Mobile App Total Users</h3>
+                    <span class="priority-badge priority-high">High</span>
+                </div>
+                <div class="kpi-value">127K</div>
+                <div class="kpi-label">All Time Active Users</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3 class="metric-title">Average App Opens</h3>
+                    <span class="priority-badge priority-medium">Medium</span>
+                </div>
+                <div class="kpi-value">4.2</div>
+                <div class="kpi-label">Per Day of Week</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3 class="metric-title">Non-Gamer Users</h3>
+                    <span class="priority-badge priority-medium">Medium</span>
+                </div>
+                <div class="kpi-value">78%</div>
+                <div class="kpi-label">Transient/Leisure Travelers</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3 class="metric-title">Wynn Rewards Sign-ups</h3>
+                    <span class="priority-badge priority-high">High</span>
+                </div>
+                <div class="kpi-value">2,847</div>
+                <div class="kpi-label">Monthly New Registrations</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3 class="metric-title">Rewards Conversion Rate</h3>
+                    <span class="priority-badge priority-high">High</span>
+                </div>
+                <div class="kpi-value">23.4%</div>
+                <div class="kpi-label">Sign-up to Active Conversion</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3 class="metric-title">RBE Facilitated Revenue</h3>
+                    <span class="priority-badge priority-high">High</span>
+                </div>
+                <div class="kpi-value">$2.4M</div>
+                <div class="kpi-label">Monthly Revenue</div>
+            </div>
+        </div>
+
+        <!-- Digital Key Performance -->
+        <div class="two-column">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3 class="metric-title">Digital Key Check-in Success</h3>
+                    <span class="priority-badge priority-medium">Medium</span>
+                </div>
+                <div class="kpi-value">89.2%</div>
+                <div class="kpi-label">Successful Check-ins</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 89.2%;"></div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3 class="metric-title">Digital Key Checkout Success</h3>
+                    <span class="priority-badge priority-medium">Medium</span>
+                </div>
+                <div class="kpi-value">92.7%</div>
+                <div class="kpi-label">Successful Checkouts</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 92.7%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- XBE Performance -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-title">XBE Net Performance Overview</h3>
+                <span class="priority-badge priority-high">High</span>
+            </div>
+            <div class="two-column">
+                <div>
+                    <div class="kpi-value">4,521</div>
+                    <div class="kpi-label">Net Reservations</div>
+                </div>
+                <div>
+                    <div class="kpi-value">3,847</div>
+                    <div class="kpi-label">Net Covers</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <div class="kpi-value">$847K</div>
+                <div class="kpi-label">Net Revenue (85% of gross)</div>
+            </div>
+        </div>
+
+        <!-- User Engagement Metrics -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-title">Mobile App Engagement Analytics</h3>
+                <span class="priority-badge priority-medium">Medium</span>
+            </div>
+            <div class="two-column">
+                <div>
+                    <div class="kpi-value">8,450</div>
+                    <div class="kpi-label">DAU (Daily Active Users)</div>
+                </div>
+                <div>
+                    <div class="kpi-value">24,680</div>
+                    <div class="kpi-label">WAU (Weekly Active Users)</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <div class="kpi-value">67,200</div>
+                <div class="kpi-label">MAU (Monthly Active Users)</div>
+            </div>
+        </div>
+
+        <!-- Web Pre-Registration Funnel -->
+        <div class="chart-container">
+            <h3 class="chart-title">Web Pre-Registration Funnel (January - April Daily Average)</h3>
+            <div class="funnel-container">
+                <div class="funnel-stage">
+                    <div><strong>Email</strong></div>
+                    <div>741</div>
+                </div>
+                <div class="funnel-stage">
+                    <div><strong>Engaged</strong></div>
+                    <div>357 (48%)</div>
+                </div>
+                <div class="funnel-stage">
+                    <div><strong>Completed</strong></div>
+                    <div>156 (21%)</div>
+                </div>
+                <div class="funnel-stage">
+                    <div><strong>Booked</strong></div>
+                    <div>89 (12%)</div>
+                </div>
+                <div class="funnel-stage">
+                    <div><strong>Stay</strong></div>
+                    <div>75 (10%)</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 20px; font-size: 1.2em; color: #f39c12; font-weight: bold;">
+                12.3% Overall Conversion Rate
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.metric-card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+
+            // Animate progress bars
+            setTimeout(() => {
+                document.querySelectorAll('.progress-fill').forEach(bar => {
+                    bar.style.width = bar.style.width; // Trigger animation
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>
